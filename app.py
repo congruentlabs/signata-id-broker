@@ -134,32 +134,52 @@ def execute_queued():
     """
 
 
+@app.route("/api/v1/kycRequests/<id>", methods=("GET"))
+def get_signature(id):
+    """
+    """
+    data = request.json
+    signatures = supabase.table("blockpass_events").select("*").eq("refId", id).eq("status", "approved").execute()
+
+    if len(signatures.data) == 0:
+        # no data
+        return "No Data", 204
+    else:
+        last_nonce = supabase.table("kyc_last_none").select("last_nonce").limit(1).single()
+        # increment the nonce
+        new_nonce = last_none + 1;
+        # generate the signature
+        signature = ""
+
+        # update the nonce
+        supabase.table("kyc_last_nonce").update({ last_nonce: new_nonce })
+
+        return signature, 200
+
+        
+        
+
+
+    identity_address = data.refId
+    claim_digest = "0x8891c73a2637b13c5e7164598239f81256ea5e7b7dcdefd496a0acd25744091c"
+    hex_message = "0x1901"
+
+        # generate nonce
+        # sign nonce with 0x8891c73a2637b13c5e7164598239f81256ea5e7b7dcdefd496a0acd25744091c
+
+
 @app.route("/api/v1/blockpassWebhook", methods={'POST'})
 def process_webhook():
     """
+    Write the webhook events to the database.
     """
-
     data = request.json
+    request_signature = request.headers['X-Hub-Signature']
 
-    if (data.event == "review.approved"):
-        identity_address = data.refId
-        # generate nonce
-        # sign nonce with 0x8891c73a2637b13c5e7164598239f81256ea5e7b7dcdefd496a0acd25744091c
-        Keccak256()
-    {
-    "guid": "5ffffc46baaaaf001236b209",
-    "status": "approved",
-    "clientId": "client_id",
-    "event": "review.approved",
-    "recordId": "5ffffb44baaaaf001236b1d1",
-    "refId": "rdm-1610611387861",
-    "submitCount": 1,
-    "blockPassID": "5ffffaeaaaaaaaa0182f387c",
-    "isArchived": false,
-    "inreviewDate": "2021-01-14T08:09:39.320Z",
-    "waitingDate": "2021-01-14T08:09:16.803Z",
-    "approvedDate": "2021-01-14T08:09:42.508Z",
-    "isPing": false,
-    "env": "prod",
-    "webhookId": null
-    }
+    # TODO: get the hash
+
+    if request_signature:
+        supabase.table('blockpass_events').insert(data).execute()
+        return 'Event Added', 200
+    else:
+        return 'Invalid Signature', 403
