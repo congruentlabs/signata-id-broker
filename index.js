@@ -6,6 +6,7 @@ const { createClient } = require('@supabase/supabase-js');
 const app = express();
 app.use(express.json());
 
+const port = process.env.PORT || 3000;
 const supabaseUrl = process.env.SUPABASE_URL;
 const supabaseKey = process.env.SUPABASE_KEY;
 const signingAuthority = process.env.SIGNING_KEY;
@@ -14,10 +15,6 @@ const DOMAIN_SEPARATOR = "0x8891c73a2637b13c5e7164598239f81256ea5e7b7dcdefd496a0
 const BLOCKPASS_SECRET = process.env.BLOCKPASS_SECRET;
 
 const supabase = createClient(supabaseUrl, supabaseKey);
-
-app.listen(3000, () => {
-  console.log('signata-id-broker started on port 3000');
-});
 
 app.get('/', (req, res) => {
   res.send({ service: "signata-id-broker", version: "0.0.1" });
@@ -95,4 +92,8 @@ app.post("/api/v1/blockpassWebhook", async (req, res) => {
     });
     return res.status(403).json({ error: "Invalid Signature" });
   }
+});
+
+app.listen(port, () => {
+  console.log('signata-id-broker started on port 3000');
 });
