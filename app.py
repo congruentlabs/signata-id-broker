@@ -2,7 +2,6 @@ from datetime import datetime, timedelta
 from functools import wraps
 
 from eth_hash import Keccak256
-from web3 import Web3
 import os
 import hmac
 import hashlib
@@ -141,22 +140,14 @@ def get_signature(id):
         new_nonce = last_nonce + 1;
         # generate the signature
         signature = ""
+        # identity_address = data.refId
+        # claim_digest = "0x8891c73a2637b13c5e7164598239f81256ea5e7b7dcdefd496a0acd25744091c"
+        # hex_message = "0x1901"
 
         # update the nonce
         supabase.table("kyc_last_nonce").update({ last_nonce: new_nonce })
 
         return signature, 200
-
-        
-        
-
-
-    identity_address = data.refId
-    claim_digest = "0x8891c73a2637b13c5e7164598239f81256ea5e7b7dcdefd496a0acd25744091c"
-    hex_message = "0x1901"
-
-        # generate nonce
-        # sign nonce with 0x8891c73a2637b13c5e7164598239f81256ea5e7b7dcdefd496a0acd25744091c
 
 
 @app.route("/api/v1/blockpassWebhook", methods={'POST'})
