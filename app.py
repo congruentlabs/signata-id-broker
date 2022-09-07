@@ -1,6 +1,7 @@
 from datetime import datetime, timedelta
 from functools import wraps
-
+from eth_abi.packed import encode_abi_packed
+from eth_abi import encode_abi
 from eth_hash import Keccak256
 import os
 import hmac
@@ -135,11 +136,31 @@ def get_signature(id):
         # no data
         return "No Data", 204
     else:
-        last_nonce = supabase.table("kyc_last_nonce").select("last_nonce").limit(1).single()
+        last_nonce = supabase.table("kyc_claims").select("last_nonce").eq("id", 1).limit(1).single()
         # increment the nonce
         new_nonce = last_nonce + 1;
         # generate the signature
+        identity = signatures.data[0]["refId"]
+
         signature = ""
+
+        claim_digest = bytes.fromhex("8891c73a2637b13c5e7164598239f81256ea5e7b7dcdefd496a0acd25744091c")
+        encoded_digest = encode_abi(['bytes32', 'address'], [claim_digest, identity])
+        packed_digest = encode_abi_packed(['bytes32', 'bytes32'], [b'\x19\x01', encoded_digest])
+
+        # bytes32 digest = keccak256(
+        #     abi.encodePacked(
+        #         "\x19\x01",
+        #         domainSeparator,
+        #         keccak256(
+        #             abi.encode(
+        #                 TXTYPE_CLAIM_DIGEST,
+        #                 nonce
+        #             )
+        #         )
+        #     )
+        # );
+
         # identity_address = data.refId
         # claim_digest = "0x8891c73a2637b13c5e7164598239f81256ea5e7b7dcdefd496a0acd25744091c"
         # hex_message = "0x1901"
