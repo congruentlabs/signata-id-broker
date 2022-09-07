@@ -10,8 +10,8 @@ const port = process.env.PORT || 3000;
 const supabaseUrl = process.env.SUPABASE_URL;
 const supabaseKey = process.env.SUPABASE_KEY;
 const signingAuthority = process.env.SIGNING_KEY;
-const TXTYPE_CLAIM_DIGEST = "0x8891c73a2637b13c5e7164598239f81256ea5e7b7dcdefd496a0acd25744091c";
-const DOMAIN_SEPARATOR = "0x8891c73a2637b13c5e7164598239f81256ea5e7b7dcdefd496a0acd25744091c";
+const TXTYPE_CLAIM_DIGEST = process.env.TXTYPE_CLAIM_DIGEST;
+const DOMAIN_SEPARATOR = process.env.DOMAIN_SEPARATOR;
 const BLOCKPASS_SECRET = process.env.BLOCKPASS_SECRET;
 
 const supabase = createClient(supabaseUrl, supabaseKey);
