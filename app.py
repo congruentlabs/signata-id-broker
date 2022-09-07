@@ -136,10 +136,10 @@ def get_signature(id):
         # no data
         return "No Data", 204
     else:
-        existing_record = supabase.table("kyc_claims").select("signature").eq("identity", id).limit(1).single()
+        existing_record = supabase.table("kyc_claims").select("signature").eq("identity", id).limit(1).execute()
         print(existing_record)
-        if existing_record.data:
-            return existing_record.data, 200
+        if len(existing_record.data) != 0:
+            return existing_record.data[0], 200
         else:
             # generate the signature
             claim_digest = bytes.fromhex("8891c73a2637b13c5e7164598239f81256ea5e7b7dcdefd496a0acd25744091c")
