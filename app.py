@@ -4,6 +4,8 @@ from functools import wraps
 from eth_hash import Keccak256
 from web3 import Web3
 import os
+import hmac
+import hashlib
 from flask import Flask, request, abort
 from eth_utils import is_address
 from supabase import create_client, Client
@@ -12,18 +14,12 @@ import supabase
 url: str = os.environ.get("ID_SUPABASE_URL")
 key: str = os.environ.get("ID_SUPABASE_KEY")
 seed: str = os.environ.get("SEED")
-web3_url: str = os.environ.get("WEB3_URL")
-
-w3 = Web3(Web3.HTTPProvider(web3_url))
-
-identity_address = ''
-identity_abi = ''
-identity_instance = w3.eth.contract(address=identity_address, abi=identity_abi)
+blockpass_secret: str = os.environ.get("BLOCKPASS_SECRET")
 
 supabase: Client = create_client(url, key)
 
-
 app = Flask(__name__)
+
 
 def get_api_key(key):
     """
@@ -129,11 +125,6 @@ def get_status():
     # total tokens staked, eth balance, etc.
 
 
-def execute_queued():
-    """
-    """
-
-
 @app.route("/api/v1/kycRequests/<id>", methods=("GET"))
 def get_signature(id):
     """
@@ -145,9 +136,9 @@ def get_signature(id):
         # no data
         return "No Data", 204
     else:
-        last_nonce = supabase.table("kyc_last_none").select("last_nonce").limit(1).single()
+        last_nonce = supabase.table("kyc_last_nonce").select("last_nonce").limit(1).single()
         # increment the nonce
-        new_nonce = last_none + 1;
+        new_nonce = last_nonce + 1;
         # generate the signature
         signature = ""
 
@@ -176,9 +167,9 @@ def process_webhook():
     data = request.json
     request_signature = request.headers['X-Hub-Signature']
 
-    # TODO: get the hash
+    signature = hmac.new(bytes(blockpass_secret, 'utf-8'), msg=request.data, digestmod=hashlib.sha256).hexdigest()
 
-    if request_signature:
+    if request_signature == signature:
         supabase.table('blockpass_events').insert(data).execute()
         return 'Event Added', 200
     else:
