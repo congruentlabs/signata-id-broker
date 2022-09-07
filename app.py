@@ -137,18 +137,24 @@ def get_signature(id):
         return "No Data", 204
     else:
         existing_record = supabase.table("kyc_claims").select("signature").eq("identity", id).limit(1).single()
-
+        print(existing_record)
         if existing_record.data:
             return existing_record.data, 200
         else:
             # generate the signature
             claim_digest = bytes.fromhex("8891c73a2637b13c5e7164598239f81256ea5e7b7dcdefd496a0acd25744091c")
+            print(claim_digest)
             encoded_digest = encode_abi(['bytes32', 'address'], [claim_digest, id])
+            print(encoded_digest)
             packed_digest = encode_abi_packed(['bytes32', 'bytes32'], [b'\x19\x01', encoded_digest])
+            print(packed_digest)
             hash_to_sign = keccak(packed_digest)
+            print(hash_to_sign)
             acct = Account.from_mnemonic(seed)
             signature = acct.sign_message(hash_to_sign)
+            print(signature)
             hex_signature = encode_hex(signature)
+            print(hex_signature)
 
             supabase.table('kyc_claims').insert({ "identity": id, "signature": hex_signature }).execute()
             return hex_signature, 200
