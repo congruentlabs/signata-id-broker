@@ -156,7 +156,7 @@ def process_webhook():
     Write the webhook events to the database.
     """
     data = request.json
-    request_signature = request.headers['X-Hub-Signature']
+    request_signature = request.headers.get('X-Hub-Signature')
 
     signature = hmac.new(bytes(blockpass_secret, 'utf-8'), msg=request.data, digestmod=hashlib.sha256).hexdigest()
 
