@@ -124,7 +124,7 @@ def get_status():
     # total tokens staked, eth balance, etc.
 
 
-@app.route("/api/v1/kycRequests/<id>", methods=("GET"))
+@app.route("/api/v1/kycRequests/<id>", methods=["GET"])
 def get_signature(id):
     """
     """
@@ -150,7 +150,7 @@ def get_signature(id):
         return signature, 200
 
 
-@app.route("/api/v1/blockpassWebhook", methods={'POST'})
+@app.route("/api/v1/blockpassWebhook", methods=['POST'])
 def process_webhook():
     """
     Write the webhook events to the database.
