@@ -49,7 +49,7 @@ app.get('/api/v1/requestKyc/:id', async (req, res) => {
       const hashToSign = ethers.utils.keccak256(`0x1901${DOMAIN_SEPARATOR.slice(2)}${inputHash.slice(2)}`);
       const signature = new ethers.utils.SigningKey(signingAuthority).signDigest(hashToSign);
 
-      const { error: insertError } = await supabase.from('kyc_claims').insert({ identity: req.params.id, signature: signature.compact });
+      const { error: insertError } = await supabase.from('kyc_claims').insert({ identity: req.params.id, signature: signature.compact, salt });
 
       if (insertError) {
         console.error(insertError);
@@ -60,7 +60,7 @@ app.get('/api/v1/requestKyc/:id', async (req, res) => {
     } else {
       // return the existing signature
       console.log('found existing record');
-      return res.status(200).json({ signature: existingRecord[0].signature });
+      return res.status(200).json({ signature: existingRecord[0].signature, salt: existingRecord[0].salt });
     }
   }
 });
