@@ -1,5 +1,6 @@
 const express = require('express');
 const ethers = require('ethers');
+const crypto = require('crypto');
 const { createHmac } = require('crypto');
 const { createClient } = require('@supabase/supabase-js');
 
@@ -40,9 +41,10 @@ app.get('/api/v1/requestKyc/:id', async (req, res) => {
 
     if (existingRecord.length === 0) {
       console.log('no existing record, creating new one');
-      // generate a new signature
+      // salt doesn't need to be ultra random. It's more about restricting the reuse of claims.
+      const salt = crypto.randomBytes(8).toString('hex');
       const inputHash = ethers.utils.keccak256(
-        `${TXTYPE_CLAIM_DIGEST}${req.params.id.slice(2).padStart(64, '0')}`,
+        `${TXTYPE_CLAIM_DIGEST}${req.params.id.slice(2).padStart(64, '0')}${salt.slice(2).padStart(64, '0')}`,
       );
       const hashToSign = ethers.utils.keccak256(`0x1901${DOMAIN_SEPARATOR.slice(2)}${inputHash.slice(2)}`);
       const signature = new ethers.utils.SigningKey(signingAuthority).signDigest(hashToSign);
@@ -54,7 +56,7 @@ app.get('/api/v1/requestKyc/:id', async (req, res) => {
         return res.status(500).json({ error: "Insert Error" });
       }
 
-      return res.status(200).json({ signature: signature.compact });
+      return res.status(200).json({ signature: signature.compact, salt });
     } else {
       // return the existing signature
       console.log('found existing record');
