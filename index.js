@@ -55,7 +55,7 @@ app.get("/api/v1/requestKyc/:id", async (req, res) => {
         salt,
       });
       const inputHash = ethers.utils.keccak256(
-        `${TXTYPE_CLAIM_DIGEST}${req.params.id.slice(2).padStart(64, "0")}${salt
+        `${TXTYPE_CLAIM_DIGEST.slice(2)}${req.params.id.slice(2).padStart(64, "0")}${salt
           .padStart(64, "0")}`
       );
       const hashToSign = ethers.utils.keccak256(
