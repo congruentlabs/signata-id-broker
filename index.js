@@ -49,6 +49,7 @@ app.get("/api/v1/requestKyc/:id", async (req, res) => {
       console.log("no existing record, creating new one");
       // salt doesn't need to be ultra random. It's more about restricting the reuse of claims.
       const salt = crypto.randomBytes(32).toString("hex");
+      console.log(salt);
       const inputHash = ethers.utils.keccak256(
         `${TXTYPE_CLAIM_DIGEST}${req.params.id.slice(2).padStart(64, "0")}${salt
           .slice(2)
