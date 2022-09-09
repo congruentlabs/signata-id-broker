@@ -37,7 +37,7 @@ app.get("/api/v1/requestKyc/:id", async (req, res) => {
     // find an existing signature
     const { data: existingRecord, error: existingRecordError } = await supabase
       .from("kyc_claims")
-      .select("signature")
+      .select("sigR, sigS, sigV, salt")
       .eq("identity", req.params.id);
 
     if (existingRecordError) {
