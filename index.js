@@ -49,13 +49,8 @@ app.get("/api/v1/requestKyc/:id", async (req, res) => {
       console.log("no existing record, creating new one");
       // salt doesn't need to be ultra random. It's more about restricting the reuse of claims.
       const salt = crypto.randomBytes(32).toString("hex");
-      console.log({
-        TXTYPE_CLAIM_DIGEST,
-        id: req.params.id,
-        salt,
-      });
       const inputHash = ethers.utils.keccak256(
-        `${TXTYPE_CLAIM_DIGEST.slice(2)}${req.params.id.slice(2).padStart(64, "0")}${salt
+        `${TXTYPE_CLAIM_DIGEST}${req.params.id.slice(2).padStart(64, "0")}${salt
           .padStart(64, "0")}`
       );
       const hashToSign = ethers.utils.keccak256(
@@ -64,6 +59,12 @@ app.get("/api/v1/requestKyc/:id", async (req, res) => {
       const signature = new ethers.utils.SigningKey(
         signingAuthority
       ).signDigest(hashToSign);
+      console.log({
+        salt,
+        inputHash,
+        hashToSign,
+        signature,
+      });
 
       const { error: insertError } = await supabase.from("kyc_claims").insert({
         identity: req.params.id,
