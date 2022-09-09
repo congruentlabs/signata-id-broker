@@ -61,31 +61,36 @@ app.get("/api/v1/requestKyc/:id", async (req, res) => {
         signingAuthority
       ).signDigest(hashToSign);
 
-      const { error: insertError } = await supabase
-        .from("kyc_claims")
-        .insert({
-          identity: req.params.id,
-          sigR: signature.r,
-          sigS: signature.s,
-          sigV: signature.v,
-          salt,
-        });
+      const { error: insertError } = await supabase.from("kyc_claims").insert({
+        identity: req.params.id,
+        sigR: signature.r,
+        sigS: signature.s,
+        sigV: signature.v,
+        salt,
+      });
 
       if (insertError) {
         console.error(insertError);
         return res.status(500).json({ error: "Insert Error" });
       }
 
-      return res.status(200).json({ signature: signature.compact, salt });
-    } else {
-      // return the existing signature
-      console.log("found existing record");
       return res
         .status(200)
         .json({
-          signature: existingRecord[0].signature,
-          salt: existingRecord[0].salt,
+          sigR: signature.sigR,
+          sigS: signature.s,
+          sigV: signature.v,
+          salt,
         });
+    } else {
+      // return the existing signature
+      console.log("found existing record");
+      return res.status(200).json({
+        sigR: existingRecord[0].sigR,
+        sigS: existingRecord[0].sigS,
+        sigV: existingRecord[0].sigV,
+        salt: existingRecord[0].salt,
+      });
     }
   }
 });
