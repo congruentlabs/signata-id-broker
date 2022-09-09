@@ -77,7 +77,7 @@ app.get("/api/v1/requestKyc/:id", async (req, res) => {
       return res
         .status(200)
         .json({
-          sigR: signature.sigR,
+          sigR: signature.r,
           sigS: signature.s,
           sigV: signature.v,
           salt,
