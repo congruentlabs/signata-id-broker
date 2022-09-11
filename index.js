@@ -131,6 +131,20 @@ app.post("/api/v1/blockpassWebhook", async (req, res) => {
   }
 });
 
+app.get("/api/v1/getIdentities", async (req, res) => {
+  const data = req.body;
+  if (!data) {
+    return res.status(400).json({ error: "No Data" });
+  }
+});
+
+app.post("/api/v1/saveIdentity", async (req, res) => {
+  const data = req.body;
+  if (!data) {
+    return res.status(400).json({ error: "No Data" });
+  }
+});
+
 app.listen(port, () => {
   console.log("signata-id-broker started on port 3000");
 });
