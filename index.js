@@ -3,6 +3,7 @@ const ethers = require("ethers");
 const crypto = require("crypto");
 const { createHmac } = require("crypto");
 const { createClient } = require("@supabase/supabase-js");
+const { Web3Storage } = require("web3.storage");
 
 const app = express();
 app.use(express.json());
@@ -17,10 +18,16 @@ const BLOCKPASS_SECRET = process.env.BLOCKPASS_SECRET;
 
 const supabase = createClient(supabaseUrl, supabaseKey);
 
+const client = new Web3Storage({ token: process.env.WEB3STORAGE_TOKEN });
+
 app.get("/", (req, res) => {
-  res.send({ service: "signata-id-broker", version: "0.0.1" });
+  res.send({ service: "signata-id-broker", version: "0.0.2" });
 });
 
+/**
+ * Request a KYC claim signature. Verifies that the user has completed KYC with Blockpass.
+ * Later this will be extended to support other KYC providers.
+ */
 app.get("/api/v1/requestKyc/:id", async (req, res) => {
   const { data, error } = await supabase
     .from("blockpass_events")
@@ -33,73 +40,75 @@ app.get("/api/v1/requestKyc/:id", async (req, res) => {
   }
   if (data.length === 0) {
     return res.status(204).json({ message: "No data found" });
-  } else {
-    // find an existing signature
-    const { data: existingRecord, error: existingRecordError } = await supabase
-      .from("kyc_claims")
-      .select("sigR, sigS, sigV, salt")
-      .eq("identity", req.params.id);
-
-    if (existingRecordError) {
-      console.error(existingRecordError);
-      return res.status(500).json({ error: "Existing Record Error" });
-    }
-
-    if (existingRecord.length === 0) {
-      console.log("no existing record, creating new one");
-      // salt doesn't need to be ultra random. It's more about restricting the reuse of claims.
-      const salt = crypto.randomBytes(32).toString("hex");
-      const inputHash = ethers.utils.keccak256(
-        `${TXTYPE_CLAIM_DIGEST}${req.params.id.slice(2).padStart(64, "0")}${salt
-          .padStart(64, "0")}`
-      );
-      const hashToSign = ethers.utils.keccak256(
-        `0x1901${DOMAIN_SEPARATOR.slice(2)}${inputHash.slice(2)}`
-      );
-      const signature = new ethers.utils.SigningKey(
-        signingAuthority
-      ).signDigest(hashToSign);
-      console.log({
-        salt,
-        inputHash,
-        hashToSign,
-        signature,
-      });
-
-      const { error: insertError } = await supabase.from("kyc_claims").insert({
-        identity: req.params.id,
-        sigR: signature.r,
-        sigS: signature.s,
-        sigV: signature.v,
-        salt,
-      });
-
-      if (insertError) {
-        console.error(insertError);
-        return res.status(500).json({ error: "Insert Error" });
-      }
-
-      return res
-        .status(200)
-        .json({
-          sigR: signature.r,
-          sigS: signature.s,
-          sigV: signature.v,
-          salt,
-        });
-    } else {
-      // return the existing signature
-      console.log("found existing record");
-      return res.status(200).json({
-        sigR: existingRecord[0].sigR,
-        sigS: existingRecord[0].sigS,
-        sigV: existingRecord[0].sigV,
-        salt: existingRecord[0].salt,
-      });
-    }
   }
+  // find an existing signature
+  const { data: existingRecord, error: existingRecordError } = await supabase
+    .from("kyc_claims")
+    .select("sigR, sigS, sigV, salt")
+    .eq("identity", req.params.id);
+
+  if (existingRecordError) {
+    console.error(existingRecordError);
+    return res.status(500).json({ error: "Existing Record Error" });
+  }
+
+  if (existingRecord.length > 0) {
+    // return the existing signature
+    console.log("found existing record");
+    return res.status(200).json({
+      sigR: existingRecord[0].sigR,
+      sigS: existingRecord[0].sigS,
+      sigV: existingRecord[0].sigV,
+      salt: existingRecord[0].salt,
+    });
+  }
+
+  console.log("no existing record, creating new one");
+  // salt doesn't need to be ultra random. It's more about restricting the reuse of claims.
+  const salt = crypto.randomBytes(32).toString("hex");
+  const inputHash = ethers.utils.keccak256(
+    `${TXTYPE_CLAIM_DIGEST}${req.params.id
+      .slice(2)
+      .padStart(64, "0")}${salt.padStart(64, "0")}`
+  );
+  const hashToSign = ethers.utils.keccak256(
+    `0x1901${DOMAIN_SEPARATOR.slice(2)}${inputHash.slice(2)}`
+  );
+  const signature = new ethers.utils.SigningKey(signingAuthority).signDigest(
+    hashToSign
+  );
+  console.log({
+    salt,
+    inputHash,
+    hashToSign,
+    signature,
+  });
+
+  const { error: insertError } = await supabase.from("kyc_claims").insert({
+    identity: req.params.id,
+    sigR: signature.r,
+    sigS: signature.s,
+    sigV: signature.v,
+    salt,
+  });
+
+  if (insertError) {
+    console.error(insertError);
+    return res.status(500).json({ error: "Insert Error" });
+  }
+
+  return res.status(200).json({
+    sigR: signature.r,
+    sigS: signature.s,
+    sigV: signature.v,
+    salt,
+  });
 });
 
+/**
+ * Process webhooks generated by blockpass.
+ * X-Hub-Signature is used to verify the authenticity of the request.
+ */
 app.post("/api/v1/blockpassWebhook", async (req, res) => {
   const data = req.body;
 
@@ -114,14 +123,7 @@ app.post("/api/v1/blockpassWebhook", async (req, res) => {
   hmac.update(JSON.stringify(data));
   const result = hmac.digest("hex");
 
-  if (result === requestSignature) {
-    const { error } = await supabase.from("blockpass_events").insert(data);
-    if (error) {
-      console.error(error);
-      return res.status(500).json({ error: "Events Error" });
-    }
-    return res.status(200).json({ message: "Event Added" });
-  } else {
+  if (result !== requestSignature) {
     console.log({
       message: "signature verification failed",
       requestSignature,
@@ -129,22 +131,73 @@ app.post("/api/v1/blockpassWebhook", async (req, res) => {
     });
     return res.status(403).json({ error: "Invalid Signature" });
   }
+
+  const { error } = await supabase.from("blockpass_events").insert(data);
+  if (error) {
+    console.error(error);
+    return res.status(500).json({ error: "Events Error" });
+  }
+  return res.status(200).json({ message: "Event Added" });
 });
 
+/**
+ * Get identity records from IPFS
+ */
 app.get("/api/v1/getIdentities", async (req, res) => {
   const data = req.body;
   if (!data) {
-    return res.status(400).json({ error: "No Data" });
+    return res.status(400).json({ error: "No Request Data" });
   }
+  const { data: existingRecord, error } = await supabase
+    .from("ipfs_records")
+    .select("*")
+    .eq("address", data.address);
+
+  if (error) {
+    return res.status(500).json({ error: "Query Error" });
+  }
+
+  if (existingRecord.length === 0) {
+    return res.status(204).json({ message: "No data found" });
+  }
+  return res.status(200).json(existingRecord);
 });
 
-app.post("/api/v1/saveIdentity", async (req, res) => {
+/**
+ * Save encrypted identity records to IPFS. Requires a signature of the hashed data to ensure only the owner can save data.
+ */
+app.post("/api/v1/saveIdentities", async (req, res) => {
   const data = req.body;
   if (!data) {
     return res.status(400).json({ error: "No Data" });
   }
+  if (!data.signature) {
+    return res.status(403).json({ error: "Missing Signature" });
+  }
+
+  const digest = ethers.utils.keccak256(data.files);
+  const address = ethers.utils.recoverAddress(digest, data.signature);
+
+  if (address !== data.address) {
+    return res.status(403).json({ error: "Invalid Signature" });
+  }
+
+  const cid = await client.put(data.files);
+  console.log(cid);
+
+  const { error } = await supabase
+    .from("ipfs_records")
+    .insert({ cid, address: data.address });
+
+  if (error) {
+    return res.status(500).json({ error: "Save Data Error" });
+  }
+  return res.status(200).json({ cid });
 });
 
+/**
+ * Start Listening
+ */
 app.listen(port, () => {
   console.log("signata-id-broker started on port 3000");
 });
