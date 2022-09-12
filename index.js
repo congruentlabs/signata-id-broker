@@ -224,10 +224,10 @@ app.post("/api/v1/saveIdentities", async (req, res) => {
     const toWrite = {
       cid,
       address: data.address,
-      updated_at: Date.now(),
+      updated_at: Date.now() / 1000,
       name: name.toString(),
       nameKey: name.key.bytes.toString("base64"),
-      revision: revision.toString(),
+      revision: revision.value,
     };
     console.log(toWrite);
 
@@ -240,7 +240,7 @@ app.post("/api/v1/saveIdentities", async (req, res) => {
       return res.status(500).json({ error: "Save Data Error" });
     }
     // return res.status(200).json({ cid });
-    return res.status(200).json({ cid, name: name.toString(), revision: revision.toString() });
+    return res.status(200).json({ cid, name: name.toString(), revision: revision.value });
   } catch (err) {
     console.error(err);
     return res.status(500).json({ error: "Server Error" });
