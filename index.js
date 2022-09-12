@@ -226,6 +226,7 @@ app.post("/api/v1/saveIdentities", async (req, res) => {
       .insert({
         cid,
         address: data.address,
+        updated_at: Date.now(),
         name,
         nameKey: name.key.bytes.toString("base64"),
         revision: revision.toString(),
