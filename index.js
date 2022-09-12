@@ -221,22 +221,26 @@ app.post("/api/v1/saveIdentities", async (req, res) => {
     }
     console.log(revision);
 
+    const toWrite = {
+      cid,
+      address: data.address,
+      updated_at: Date.now(),
+      name: name.toString(),
+      nameKey: name.key.bytes.toString("base64"),
+      revision: revision.toString(),
+    };
+    console.log(toWrite);
+
     const { error: insertError } = await supabase
       .from("ipfs_records")
-      .insert({
-        cid,
-        address: data.address,
-        updated_at: Date.now(),
-        name,
-        nameKey: name.key.bytes.toString("base64"),
-        revision: revision.toString(),
-      });
+      .insert(toWrite);
 
     if (insertError) {
+      console.error(insertError);
       return res.status(500).json({ error: "Save Data Error" });
     }
     // return res.status(200).json({ cid });
-    return res.status(200).json({});
+    return res.status(200).json({ cid, name: name.toString(), revision: revision.toString() });
   } catch (err) {
     console.error(err);
     return res.status(500).json({ error: "Server Error" });
