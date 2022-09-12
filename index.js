@@ -224,7 +224,7 @@ app.post("/api/v1/saveIdentities", async (req, res) => {
     const toWrite = {
       cid,
       address: data.address,
-      updated_at: Date.now() / 1000,
+      updated_at: (new Date()).toISOString(),
       name: name.toString(),
       nameKey: name.key.bytes.toString("base64"),
       revision: revision.value,
