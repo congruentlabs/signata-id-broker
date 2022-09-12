@@ -146,22 +146,28 @@ app.post("/api/v1/blockpassWebhook", async (req, res) => {
  */
 app.get("/api/v1/getIdentities", async (req, res) => {
   const data = req.body;
-  if (!data) {
-    return res.status(400).json({ error: "No Request Data" });
+  try {
+    if (!data) {
+      return res.status(400).json({ error: "No Request Data" });
+    }
+    const { data: existingRecord, error } = await supabase
+      .from("ipfs_records")
+      .select("name, cid, revision")
+      .eq("address", data.address);
+  
+    if (error) {
+      return res.status(500).json({ error: "Query Error" });
+    }
+    console.log(existingRecord);
+  
+    if (existingRecord.length === 0) {
+      return res.status(204).json({ message: "No data found" });
+    }
+    return res.status(200).json(existingRecord);
+  } catch (err) {
+    console.error(err);
+    return res.status(500).json({ error: "Server Error" });
   }
-  const { data: existingRecord, error } = await supabase
-    .from("ipfs_records")
-    .select("*")
-    .eq("address", data.address);
-
-  if (error) {
-    return res.status(500).json({ error: "Query Error" });
-  }
-
-  if (existingRecord.length === 0) {
-    return res.status(204).json({ message: "No data found" });
-  }
-  return res.status(200).json(existingRecord);
 });
 
 /**
