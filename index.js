@@ -4,7 +4,7 @@ const crypto = require("crypto");
 const { createHmac } = require("crypto");
 const { createClient } = require("@supabase/supabase-js");
 const { Web3Storage, File } = require("web3.storage");
-const Name = require('w3name');
+const Name = require("w3name");
 
 const app = express();
 app.use(express.json());
@@ -176,53 +176,61 @@ app.post("/api/v1/saveIdentities", async (req, res) => {
     if (!data.signature) {
       return res.status(403).json({ error: "Missing Signature" });
     }
-  
+
     const { data: existingRecord, error } = await supabase
       .from("ipfs_records")
       .select("*")
       .eq("address", data.address);
-  
-  
+
     let name;
     let newFile = false;
     if (existingRecord.length === 0) {
       name = await Name.create();
       newFile = true;
     } else {
-      name = await Name.from(Buffer.from(existingRecord[0].nameKey, 'base64'));
+      name = await Name.from(Buffer.from(existingRecord[0].nameKey, "base64"));
     }
     console.log(name);
-  
-    const digest = ethers.utils.keccak256(data.encryptedData);
+
+    const digest = ethers.utils.keccak256(Buffer.from(data.encryptedData, 'utf-8'));
     const address = ethers.utils.recoverAddress(digest, data.signature);
-  
+
     if (address !== data.address) {
       return res.status(403).json({ error: "Invalid Signature" });
     }
-  
+
     const buffer = Buffer.from(data.encryptedData); // new  Blob([JSON.stringify(data.encryptedData)], { type: 'application/json' });
     console.log(buffer);
-  
-    const file = new File([buffer], 'data.json', { type: 'application/json' });
+
+    const file = new File([buffer], "data.json", { type: "application/json" });
     console.log(file);
-  
-    const cid = await client.put([ file ]);
+
+    const cid = await client.put([file]);
     console.log(cid);
-  
+
     let revision;
     if (newFile) {
       revision = await Name.v0(name, `/ipfs/${cid}`);
       await Name.publish(revision, name.key);
     } else {
-      const nextRevision = await Name.increment(existingRecord[0].revision, `/ipfs/${cid}`);
-      await Name.publish(nextRevision, name.key); 
+      const nextRevision = await Name.increment(
+        existingRecord[0].revision,
+        `/ipfs/${cid}`
+      );
+      await Name.publish(nextRevision, name.key);
     }
     console.log(revision);
-  
+
     const { error: insertError } = await supabase
       .from("ipfs_records")
-      .insert({ cid, address: data.address, name, nameKey: name.key.bytes.toString('base64'), revision: revision.toString() });
-  
+      .insert({
+        cid,
+        address: data.address,
+        name,
+        nameKey: name.key.bytes.toString("base64"),
+        revision: revision.toString(),
+      });
+
     if (insertError) {
       return res.status(500).json({ error: "Save Data Error" });
     }
