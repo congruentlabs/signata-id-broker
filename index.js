@@ -233,7 +233,7 @@ app.post("/api/v1/saveIdentities", async (req, res) => {
 
     const { error: insertError } = await supabase
       .from("ipfs_records")
-      .insert(toWrite);
+      .upsert(toWrite, { onConflict: 'address' });
 
     if (insertError) {
       console.error(insertError);
