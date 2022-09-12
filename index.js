@@ -197,7 +197,7 @@ app.post("/api/v1/saveIdentities", async (req, res) => {
     } else {
       name = await Name.from(Buffer.from(existingRecord[0].nameKey, "base64"));
     }
-    console.log(name);
+    // console.log(name);
 
     const digest = ethers.utils.keccak256(Buffer.from(data.encryptedData, 'utf-8'));
     const address = ethers.utils.recoverAddress(digest, data.signature);
@@ -207,7 +207,7 @@ app.post("/api/v1/saveIdentities", async (req, res) => {
     }
 
     const buffer = Buffer.from(data.encryptedData); // new  Blob([JSON.stringify(data.encryptedData)], { type: 'application/json' });
-    console.log(buffer);
+    // console.log(buffer);
 
     const file = new File([buffer], "data.json", { type: "application/json" });
     console.log(file);
