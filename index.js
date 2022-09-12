@@ -144,16 +144,17 @@ app.post("/api/v1/blockpassWebhook", async (req, res) => {
 /**
  * Get identity records from IPFS
  */
-app.get("/api/v1/getIdentities", async (req, res) => {
-  const data = req.body;
+app.get("/api/v1/getIdentities:id", async (req, res) => {
+  const id = req.params.id;
   try {
-    if (!data) {
-      return res.status(400).json({ error: "No Request Data" });
+    if (!id) {
+      return res.status(400).json({ error: "No Request Param" });
     }
+    console.log(id);
     const { data: existingRecord, error } = await supabase
       .from("ipfs_records")
       .select("name, cid, revision")
-      .eq("address", data.address);
+      .eq("address", id);
   
     if (error) {
       return res.status(500).json({ error: "Query Error" });
