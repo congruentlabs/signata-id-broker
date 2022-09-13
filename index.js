@@ -197,7 +197,6 @@ app.post("/api/v1/saveIdentities", async (req, res) => {
     } else {
       name = await Name.from(Buffer.from(existingRecord[0].nameKey, "base64"));
     }
-    // console.log(name);
 
     const digest = ethers.utils.keccak256(
       Buffer.from(data.encryptedData, "utf-8")
@@ -208,12 +207,8 @@ app.post("/api/v1/saveIdentities", async (req, res) => {
       return res.status(403).json({ error: "Invalid Signature" });
     }
 
-    const buffer = Buffer.from(data.encryptedData); // new  Blob([JSON.stringify(data.encryptedData)], { type: 'application/json' });
-    // console.log(buffer);
-
+    const buffer = Buffer.from(data.encryptedData);
     const file = new File([buffer], "data.json", { type: "application/json" });
-    console.log({ file });
-
     const cid = await client.put([file]);
     console.log({ cid });
 
@@ -225,7 +220,8 @@ app.post("/api/v1/saveIdentities", async (req, res) => {
       revision = await Name.resolve(name);
       const nextRevision = await Name.increment(revision, `/ipfs/${cid}`);
       await Name.publish(nextRevision, name.key);
-      console.log({ nextRevision });
+      // console.log({ nextRevision });
+      revision = nextRevision;
     }
     console.log({ revision });
 
