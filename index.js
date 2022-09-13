@@ -155,12 +155,12 @@ app.get("/api/v1/getIdentities:id", async (req, res) => {
       .from("ipfs_records")
       .select("name, cid, revision")
       .eq("address", id);
-  
+
     if (error) {
       return res.status(500).json({ error: "Query Error" });
     }
     console.log(existingRecord);
-  
+
     if (existingRecord.length === 0) {
       return res.status(204).json({ message: "No data found" });
     }
@@ -199,7 +199,9 @@ app.post("/api/v1/saveIdentities", async (req, res) => {
     }
     // console.log(name);
 
-    const digest = ethers.utils.keccak256(Buffer.from(data.encryptedData, 'utf-8'));
+    const digest = ethers.utils.keccak256(
+      Buffer.from(data.encryptedData, "utf-8")
+    );
     const address = ethers.utils.recoverAddress(digest, data.signature);
 
     if (address !== data.address) {
@@ -210,28 +212,27 @@ app.post("/api/v1/saveIdentities", async (req, res) => {
     // console.log(buffer);
 
     const file = new File([buffer], "data.json", { type: "application/json" });
-    console.log(file);
+    console.log({ file });
 
     const cid = await client.put([file]);
-    console.log(cid);
+    console.log({ cid });
 
     let revision;
     if (newFile) {
       revision = await Name.v0(name, `/ipfs/${cid}`);
       await Name.publish(revision, name.key);
     } else {
-      const nextRevision = await Name.increment(
-        existingRecord[0].revision,
-        `/ipfs/${cid}`
-      );
+      revision = await Name.resolve(name);
+      const nextRevision = await Name.increment(revision, `/ipfs/${cid}`);
       await Name.publish(nextRevision, name.key);
+      console.log({ nextRevision });
     }
-    console.log(revision);
+    console.log({ revision });
 
     const toWrite = {
       cid,
       address: data.address,
-      updated_at: (new Date()).toISOString(),
+      updated_at: new Date().toISOString(),
       name: name.toString(),
       nameKey: name.key.bytes.toString("base64"),
       revision: revision.value,
@@ -240,14 +241,16 @@ app.post("/api/v1/saveIdentities", async (req, res) => {
 
     const { error: insertError } = await supabase
       .from("ipfs_records")
-      .upsert(toWrite, { onConflict: 'address' });
+      .upsert(toWrite, { onConflict: "address" });
 
     if (insertError) {
       console.error(insertError);
       return res.status(500).json({ error: "Save Data Error" });
     }
     // return res.status(200).json({ cid });
-    return res.status(200).json({ cid, name: name.toString(), revision: revision.value });
+    return res
+      .status(200)
+      .json({ cid, name: name.toString(), revision: revision.value });
   } catch (err) {
     console.error(err);
     return res.status(500).json({ error: "Server Error" });
