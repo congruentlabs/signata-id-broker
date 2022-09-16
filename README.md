@@ -24,13 +24,14 @@ The Identity Broker is a node express service using [Supabase](supabase.com) for
 
 Set the supabase URL and Key (server key, not client key) for your development environment. For Windows PowerShell:
 
+``` PowerShell
 $Env:ID_SUPABASE_URL = "..."
 $Env:ID_SUPABASE_KEY = "..."
 $Env:SIGNING_KEY = "..."
 $Env:TXTYPE_CLAIM_DIGEST = "..."
 $Env:DOMAIN_SEPARATOR = "..."
 $Env:BLOCKPASS_SECRET = "..."
-
+```
 VSCode can run the application in debug mode using it's built-in flask debugger.
 
 To call the API, just use an app like Postman to hit http://localhost:5000
