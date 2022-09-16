@@ -2,11 +2,19 @@
 
 [![DigitalOcean Referral Badge](https://web-platforms.sfo2.cdn.digitaloceanspaces.com/WWW/Badge%201.svg)](https://www.digitalocean.com/?refcode=7802e11be119&utm_campaign=Referral_Invite&utm_medium=Referral_Program&utm_source=badge)
 
-The Identity Broker is a python flask service using [Supabase](supabase.com) for record retrieval and storage. It can be easily deployed on services like [DigitalOcean](https://m.do.co/c/7802e11be119) with the following environment variables set:
+The Identity Broker is a node express service using [Supabase](supabase.com) for record retrieval and storage. It can be easily deployed on services like [DigitalOcean](https://m.do.co/c/7802e11be119) with the following environment variables set:
 
-`ID_SUPABASE_URL`
+`SUPABASE_URL`
 
-`ID_SUPABASE_KEY`
+`SUPABASE_KEY`
+
+`SIGNING_KEY`
+
+`TXTYPE_CLAIM_DIGEST`
+
+`DOMAIN_SEPARATOR`
+
+`BLOCKPASS_SECRET`
 
 ## Documentation
 
@@ -18,6 +26,10 @@ Set the supabase URL and Key (server key, not client key) for your development e
 
 $Env:ID_SUPABASE_URL = "..."
 $Env:ID_SUPABASE_KEY = "..."
+$Env:SIGNING_KEY = "..."
+$Env:TXTYPE_CLAIM_DIGEST = "..."
+$Env:DOMAIN_SEPARATOR = "..."
+$Env:BLOCKPASS_SECRET = "..."
 
 VSCode can run the application in debug mode using it's built-in flask debugger.
 
