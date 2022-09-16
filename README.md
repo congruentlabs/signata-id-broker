@@ -32,6 +32,6 @@ $Env:TXTYPE_CLAIM_DIGEST = "..."
 $Env:DOMAIN_SEPARATOR = "..."
 $Env:BLOCKPASS_SECRET = "..."
 ```
-VSCode can run the application in debug mode using it's built-in flask debugger.
+VSCode can run the application in debug mode using it's built-in debugger.
 
 To call the API, just use an app like Postman to hit http://localhost:5000
