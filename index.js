@@ -198,10 +198,10 @@ app.post("/api/v1/saveIdentities", async (req, res) => {
       name = await Name.from(Buffer.from(existingRecord[0].nameKey, "base64"));
     }
 
-    // const digest = ethers.utils.keccak256(
-    //   Buffer.from(data.encryptedData, "utf-8")
-    // );
-    const digest = ethers.utils.hashMessage(Buffer.from(data.encryptedData, "utf-8"));
+    const digest = ethers.utils.keccak256(
+      Buffer.from(data.encryptedData, "utf-8")
+    );
+    // const digest = ethers.utils.hashMessage(Buffer.from(data.encryptedData, "utf-8"));
     const address = ethers.utils.recoverAddress(digest, data.signature);
 
     if (address !== data.address) {
