@@ -198,11 +198,18 @@ app.post("/api/v1/saveIdentities", async (req, res) => {
       name = await Name.from(Buffer.from(existingRecord[0].nameKey, "base64"));
     }
 
-    const digest = ethers.utils.keccak256(
-      Buffer.from(data.encryptedData, "utf-8")
-    );
+    // const digest = ethers.utils.keccak256(
+      //   Buffer.from(data.encryptedData, "utf-8")
+      // );
+    const prefix = Buffer.from('\x19Ethereum Signed Message:\n');
+    const idsBuf = Buffer.from(data.encryptedData, 'utf-8');
+    const hashToSign = ethers.utils.keccak256(idsBuf);
+    const hashBuf = Buffer.from(hashToSign.slice(2), 'hex');
+    const lengthBuf = Buffer.from(String(hashBuf.length));
+    const arrBuf = Buffer.concat([prefix, lengthBuf, hashBuf]);
+    const hash = ethers.utils.keccak256(arrBuf);
     // const digest = ethers.utils.hashMessage(Buffer.from(data.encryptedData, "utf-8"));
-    const address = ethers.utils.recoverAddress(digest, data.signature);
+    const address = ethers.utils.recoverAddress(hash, data.signature);
 
     if (address !== data.address) {
       return res.status(403).json({ error: "Invalid Signature" });
