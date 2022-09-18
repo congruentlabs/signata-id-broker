@@ -201,7 +201,8 @@ app.post("/api/v1/saveIdentities", async (req, res) => {
     const digest = ethers.utils.keccak256(
       Buffer.from(data.encryptedData, "utf-8")
     );
-    const address = ethers.utils.recoverAddress(digest, data.signature);
+    const hash = ethers.utils.hashMessage(digest);
+    const address = ethers.utils.recoverAddress(hash, data.signature);
 
     if (address !== data.address) {
       return res.status(403).json({ error: "Invalid Signature" });
