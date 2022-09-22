@@ -1,6 +1,7 @@
 const express = require("express");
 const ethers = require("ethers");
 const crypto = require("crypto");
+const axios = require("axios");
 const { createHmac } = require("crypto");
 const { createClient } = require("@supabase/supabase-js");
 const { Web3Storage, File } = require("web3.storage");
@@ -16,6 +17,7 @@ const signingAuthority = process.env.SIGNING_KEY;
 const TXTYPE_CLAIM_DIGEST = process.env.TXTYPE_CLAIM_DIGEST;
 const DOMAIN_SEPARATOR = process.env.DOMAIN_SEPARATOR;
 const BLOCKPASS_SECRET = process.env.BLOCKPASS_SECRET;
+const CHAINALYSIS_SECRET = process.env.CHAINALYSIS_SECRET;
 
 const supabase = createClient(supabaseUrl, supabaseKey);
 
@@ -42,6 +44,21 @@ app.get("/api/v1/requestKyc/:id", async (req, res) => {
   if (data.length === 0) {
     return res.status(204).json({ message: "No data found" });
   }
+
+  // check it's not a sanctioned address
+  const sanctionResponse = await axios.get('https://public.chainalysis.com/api/v1/address/' + req.params.id, { headers: {
+    'X-API-KEY': CHAINALYSIS_SECRET, 'Accept': 'application/json'
+  }})
+
+  if (sanctionResponse !== 200) {
+    return res.status(500).json({ error: "Sanction lookup failed" });
+  }
+
+  if (sanctionResponse.data && sanctionResponse.data  ) {
+    // TODO: read the sanction data and check if it's a sanctioned address
+    return res.status(403).json({ error: "Address is sanctioned" });
+  }
+
   // find an existing signature
   const { data: existingRecord, error: existingRecordError } = await supabase
     .from("kyc_claims")
