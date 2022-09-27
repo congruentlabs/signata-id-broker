@@ -32,19 +32,6 @@ app.get("/", (req, res) => {
  * Later this will be extended to support other KYC providers.
  */
 app.get("/api/v1/requestKyc/:id", async (req, res) => {
-  const { data, error } = await supabase
-    .from("blockpass_events")
-    .select("*")
-    .eq("refId", req.params.id);
-
-  if (error) {
-    console.error(error);
-    return res.status(500).json({ error: "Events Error" });
-  }
-  if (data.length === 0) {
-    return res.status(204).json({ message: "No data found" });
-  }
-
   // check it's not a sanctioned address
   const sanctionResponse = await axios.get('https://public.chainalysis.com/api/v1/address/' + req.params.id, { headers: {
     'X-API-KEY': CHAINALYSIS_SECRET, 'Accept': 'application/json'
@@ -60,6 +47,19 @@ app.get("/api/v1/requestKyc/:id", async (req, res) => {
       return res.status(403).json({ error: "Address is sanctioned" });
     }
     // otherwise it's not sanctioned
+  }
+
+  const { data, error } = await supabase
+    .from("blockpass_events")
+    .select("*")
+    .eq("refId", req.params.id);
+
+  if (error) {
+    console.error(error);
+    return res.status(500).json({ error: "Events Error" });
+  }
+  if (data.length === 0) {
+    return res.status(204).json({ message: "No data found" });
   }
 
   // find an existing signature
