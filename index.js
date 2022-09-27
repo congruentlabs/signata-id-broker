@@ -50,7 +50,7 @@ app.get("/api/v1/requestKyc/:id", async (req, res) => {
     'X-API-KEY': CHAINALYSIS_SECRET, 'Accept': 'application/json'
   }})
 
-  if (sanctionResponse !== 200) {
+  if (sanctionResponse.status !== 200) {
     console.error(sanctionResponse);
     return res.status(500).json({ error: "Sanction lookup failed" });
   }
