@@ -51,6 +51,7 @@ app.get("/api/v1/requestKyc/:id", async (req, res) => {
   }})
 
   if (sanctionResponse !== 200) {
+    console.error(sanctionResponse);
     return res.status(500).json({ error: "Sanction lookup failed" });
   }
 
