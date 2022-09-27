@@ -54,9 +54,11 @@ app.get("/api/v1/requestKyc/:id", async (req, res) => {
     return res.status(500).json({ error: "Sanction lookup failed" });
   }
 
-  if (sanctionResponse.data && sanctionResponse.data  ) {
-    // TODO: read the sanction data and check if it's a sanctioned address
-    return res.status(403).json({ error: "Address is sanctioned" });
+  if (sanctionResponse.data && sanctionResponse.data.identifications) {
+    if (sanctionResponse.data.identifications.length > 0) {
+      return res.status(403).json({ error: "Address is sanctioned" });
+    }
+    // otherwise it's not sanctioned
   }
 
   // find an existing signature
