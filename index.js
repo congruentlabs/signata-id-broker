@@ -300,14 +300,15 @@ app.get('/api/v1/sheet/:spreadsheetId', (req, res) => {
   if (cachedSheetsExpiry && cachedSheetsExpiry > now) {
     return res.status(200).json(cachedSheetsData);
   }
-  sheets.spreadsheets.get({
-    spreadsheetId: req.params.spreadsheetId
+  sheets.spreadsheets.values.get({
+    spreadsheetId: req.params.spreadsheetId,
+    range: 'Sheet1!A1:F1000'
   }, (err, result) => {
     if (err) {
       console.error(err);
       return res.status(500).json({ error: 'Server Error' });
     }
-    cachedSheetsData = result.data;
+    cachedSheetsData = result.data.values;
     cachedDataExpiry = now + 3600000;
 
     res.json(cachedSheetsData);
