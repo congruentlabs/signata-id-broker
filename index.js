@@ -19,7 +19,7 @@ const TXTYPE_CLAIM_DIGEST = process.env.TXTYPE_CLAIM_DIGEST;
 const DOMAIN_SEPARATOR = process.env.DOMAIN_SEPARATOR;
 const BLOCKPASS_SECRET = process.env.BLOCKPASS_SECRET;
 const CHAINALYSIS_SECRET = process.env.CHAINALYSIS_SECRET;
-const GOOGLE_CLIENT_EMAIL = process.eng.GOOGLE_CLIENT_EMAIL;
+const GOOGLE_CLIENT_EMAIL = process.env.GOOGLE_CLIENT_EMAIL;
 const GOOGLE_PRIVATE_KEY = process.env.GOOGLE_PRIVATE_KEY;
 
 const supabase = createClient(supabaseUrl, supabaseKey);
