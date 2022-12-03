@@ -296,7 +296,7 @@ app.post("/api/v1/saveIdentities", async (req, res) => {
   }
 });
 
-app.get('/api/v1/:spreadsheetId', (req, res) => {
+app.get('/api/v1/sheet/:spreadsheetId', (req, res) => {
   const now = Date.now();
   if (cachedSheetsExpiry && cachedSheetsExpiry > now) {
     return res.status(200).json(cachedSheetsData);
