@@ -2,6 +2,7 @@ const express = require("express");
 const ethers = require("ethers");
 const crypto = require("crypto");
 const axios = require("axios");
+const { google } = require('googleapis');
 const { createHmac } = require("crypto");
 const { createClient } = require("@supabase/supabase-js");
 const { Web3Storage, File } = require("web3.storage");
@@ -18,10 +19,24 @@ const TXTYPE_CLAIM_DIGEST = process.env.TXTYPE_CLAIM_DIGEST;
 const DOMAIN_SEPARATOR = process.env.DOMAIN_SEPARATOR;
 const BLOCKPASS_SECRET = process.env.BLOCKPASS_SECRET;
 const CHAINALYSIS_SECRET = process.env.CHAINALYSIS_SECRET;
+const GOOGLE_CLIENT_EMAIL = process.eng.GOOGLE_CLIENT_EMAIL;
+const GOOGLE_PRIVATE_KEY = process.env.GOOGLE_PRIVATE_KEY;
 
 const supabase = createClient(supabaseUrl, supabaseKey);
 
 const client = new Web3Storage({ token: process.env.WEB3STORAGE_TOKEN });
+
+const google_client = new google.auth.JWT(
+  GOOGLE_CLIENT_EMAIL,
+  null,
+  GOOGLE_PRIVATE_KEY,
+  ['https://www.googleapis.com/auth/spreadsheets']
+);
+
+const sheets = google.sheets({ version: 'v4', auth: google_client });
+
+let cachedSheetsData;
+let cachedSheetsExpiry;
 
 app.get("/", (req, res) => {
   res.send({ service: "signata-id-broker", version: "0.0.2" });
@@ -279,6 +294,25 @@ app.post("/api/v1/saveIdentities", async (req, res) => {
     console.error(err);
     return res.status(500).json({ error: "Server Error" });
   }
+});
+
+app.get('/api/v1/:spreadsheetId', (req, res) => {
+  const now = Date.now();
+  if (cachedSheetsExpiry && cachedSheetsExpiry > now) {
+    return res.status(200).json(cachedSheetsData);
+  }
+  sheets.spreadsheets.get({
+    spreadsheetId: req.params.spreadsheetId
+  }, (err, result) => {
+    if (err) {
+      console.error(err);
+      return res.status(500).json({ error: 'Server Error' });
+    }
+    cachedSheetsData = result.data;
+    cachedDataExpiry = now + 3600000;
+
+    res.json(cachedSheetsData);
+  });
 });
 
 /**
