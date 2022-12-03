@@ -25,13 +25,20 @@ const supabase = createClient(supabaseUrl, supabaseKey);
 
 const client = new Web3Storage({ token: process.env.WEB3STORAGE_TOKEN });
 
-const sheets = google.sheets({ version: 'v4', auth: GOOGLE_CREDENTIALS });
+const google_client = new google.auth.JWT(
+  GOOGLE_CREDENTIALS.client_email,
+  null,
+  GOOGLE_CREDENTIALS.private_key,
+  ['https://www.googleapis.com/auth/spreadsheets']
+)
+
+const sheets = google.sheets({ version: 'v4', auth: google_client });
 
 let cachedSheetsData;
 let cachedSheetsExpiry;
 
 app.get("/", (req, res) => {
-  res.send({ service: "signata-id-broker", version: "0.0.2" });
+  res.send({ service: "signata-id-broker", version: "0.0.3" });
 });
 
 /**
