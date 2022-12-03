@@ -19,21 +19,13 @@ const TXTYPE_CLAIM_DIGEST = process.env.TXTYPE_CLAIM_DIGEST;
 const DOMAIN_SEPARATOR = process.env.DOMAIN_SEPARATOR;
 const BLOCKPASS_SECRET = process.env.BLOCKPASS_SECRET;
 const CHAINALYSIS_SECRET = process.env.CHAINALYSIS_SECRET;
-const GOOGLE_CLIENT_EMAIL = process.env.GOOGLE_CLIENT_EMAIL;
-const GOOGLE_PRIVATE_KEY = process.env.GOOGLE_PRIVATE_KEY;
+const GOOGLE_CREDENTIALS = JSON.parse(process.env.GOOGLE_CREDENTIALS);
 
 const supabase = createClient(supabaseUrl, supabaseKey);
 
 const client = new Web3Storage({ token: process.env.WEB3STORAGE_TOKEN });
 
-const google_client = new google.auth.JWT(
-  GOOGLE_CLIENT_EMAIL,
-  null,
-  GOOGLE_PRIVATE_KEY,
-  ['https://www.googleapis.com/auth/spreadsheets']
-);
-
-const sheets = google.sheets({ version: 'v4', auth: google_client });
+const sheets = google.sheets({ version: 'v4', auth: GOOGLE_CREDENTIALS });
 
 let cachedSheetsData;
 let cachedSheetsExpiry;
